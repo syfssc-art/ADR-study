@@ -124,6 +124,7 @@ function home(){
   <button class="secondary" onclick="startMock()">本試験型 模擬試験15問（10回抽出）</button>
   <button class="secondary" onclick="startSession('wrong')">間違えた問題だけ</button>
  </div>
+ <div class="card"><h2>年度別</h2><button class="secondary" onclick="openYears()">第11回〜第20回から選ぶ</button></div>
  <div class="card"><h2>分野別</h2>${cats.map(c=>{let z=statsFor(QUESTIONS.filter(q=>q.category===c));return `<button class="category" onclick='startCategory(${JSON.stringify(c)})'><span class="name">${esc(c)}</span><span class="badge">${z.done}/${QUESTIONS.filter(q=>q.category===c).length}・${z.rate}%</span></button>`}).join("")}</div>`;
 }
 function study(){
@@ -131,9 +132,17 @@ function study(){
  <button class="primary" onclick="startSession('unanswered')">未回答を優先</button>
  <button class="secondary" onclick="startSession('all')">全150問</button>
  <button class="secondary" onclick="startSession('wrong')">誤答のみ</button>
- <button class="secondary" onclick="startMock()">本試験型15問模擬試験（10回抽出）</button></div>
+ <button class="secondary" onclick="startMock()">本試験型15問模擬試験（10回抽出）</button>
+ <button class="secondary" onclick="openYears()">年度別に選ぶ</button></div>
  <div class="card"><h2>分野を選ぶ</h2>${cats.map(c=>`<button class="category" onclick='startCategory(${JSON.stringify(c)})'><span class="name">${esc(c)}</span><span class="badge">${QUESTIONS.filter(q=>q.category===c).length}問</span></button>`).join("")}</div>`;
 }
+function openYears(){currentView="years";state.session=null;save();render()}
+function yearsView(){
+ let years=[];for(let y=11;y<=20;y++)years.push(y);
+ return `<div class="card"><h1>年度別</h1><div class="muted">回を選ぶと、第1問〜第15問を直接開けます。</div></div>
+ ${years.map(y=>{let qs=QUESTIONS.filter(q=>q.year===y).sort((a,b)=>a.sourceQuestion-b.sourceQuestion);return `<div class="card"><h2>第${y}回</h2>${qs.map(q=>{let a=answered(q);let st=a?(a.correct?"○":"×"):"未回答";return `<button class="category" onclick="startYearQuestion(${q.id})"><span class="name">第${q.sourceQuestion}問　${esc(q.theme||q.category)}</span><span class="badge">${st}</span></button>`}).join("")}</div>`}).join("")}`;
+}
+function startYearQuestion(id){begin([id],`第${byId[id].year}回 第${byId[id].sourceQuestion}問`)}
 function review(){
  const list=state.review.map(id=>byId[id]).filter(Boolean);
  if(!list.length)return `<div class="card"><h1>要復習</h1><p>まだ登録されていません。問題画面の ☆ を押すとここに追加できます。</p></div>`;
@@ -282,7 +291,7 @@ function sessionEnd(){
 function resetProgress(){if(confirm("正答履歴・要復習をすべて削除しますか？")){state.answers={};state.review=[];state.session=null;save();toast("リセットしました");render()}}
 function render(){
  document.getElementById("bookmarkTop").style.visibility=currentView==="question"?"visible":"hidden";
- let out=currentView==="home"?home():currentView==="study"?study():currentView==="review"?review():currentView==="stats"?stats():currentView==="question"?questionView():sessionEnd();
+ let out=currentView==="home"?home():currentView==="study"?study():currentView==="years"?yearsView():currentView==="review"?review():currentView==="stats"?stats():currentView==="question"?questionView():sessionEnd();
  document.getElementById("app").innerHTML=out;
  window.scrollTo({top:0,behavior:"instant"})
 }
